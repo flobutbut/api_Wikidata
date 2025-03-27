@@ -9,9 +9,6 @@
         {{ period.startDate ? `Début: ${period.startDate}` : '' }}
         {{ period.endDate ? ` - Fin: ${period.endDate}` : '' }}
       </p>
-      <p v-if="period.description" class="period-description">
-        {{ period.description }}
-      </p>
     </div>
     <div class="period-arrow">→</div>
   </div>
@@ -19,33 +16,10 @@
 
 <script setup lang="ts">
 import type { GeologicalPeriod } from '../types/geological';
-import { onMounted, watch } from 'vue';
 
-const props = defineProps<{
+defineProps<{
   period: GeologicalPeriod;
 }>();
-
-// Log des données reçues
-onMounted(() => {
-  console.log('GeologicalPeriodCard - Données reçues:', {
-    id: props.period.id,
-    label: props.period.label,
-    description: props.period.description,
-    startDate: props.period.startDate,
-    endDate: props.period.endDate
-  });
-});
-
-// Surveiller les changements de période
-watch(() => props.period, (newPeriod) => {
-  console.log('GeologicalPeriodCard - Mise à jour des données:', {
-    id: newPeriod.id,
-    label: newPeriod.label,
-    description: newPeriod.description,
-    startDate: newPeriod.startDate,
-    endDate: newPeriod.endDate
-  });
-}, { deep: true });
 
 defineEmits<{
   (e: 'click'): void;
@@ -84,7 +58,7 @@ defineEmits<{
 }
 
 .period-dates {
-  margin: 0;
+  margin: 5px 0;
   color: #666;
   font-size: 0.9em;
 }
@@ -94,12 +68,5 @@ defineEmits<{
   font-size: 1.2em;
   margin-left: 15px;
   padding: 0 5px;
-}
-
-.period-description {
-  margin: 0;
-  color: #666;
-  font-size: 0.9em;
-  font-style: italic;
 }
 </style> 

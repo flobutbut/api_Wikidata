@@ -1,6 +1,5 @@
 import axios, { AxiosError } from 'axios';
 import type { GeologicalPeriod, WikidataResponse } from '../types/geological';
-import { DateFormatter } from '../utils/dateFormatter';
 
 const WIKIDATA_API_URL = '/api/wikidata/sparql';
 const MAX_RETRIES = 3;
@@ -143,115 +142,44 @@ export class WikidataService {
       ? `?item wdt:P361 wd:${parentId}.`  // Si on a un parent, on cherche ses enfants
       : `VALUES ?item { wd:Q104460 wd:Q104168 wd:Q104162 wd:Q101313 }`; // Liste des éons
     
-    // Afficher la requête complète pour le débogage
-    const query = `
-      SELECT DISTINCT ?item ?itemLabel ?startDate ?endDate ?location ?locationLabel
+    return `
+      SELECT DISTINCT ?item ?itemLabel ?startDate ?endDate
       WHERE {
         ${parentFilter}
+        SERVICE wikibase:label { 
+          bd:serviceParam wikibase:language "${language},en". 
+          ?item rdfs:label ?itemLabel.
+        }
         OPTIONAL { ?item wdt:P580 ?startDate. }
         OPTIONAL { ?item wdt:P582 ?endDate. }
-        OPTIONAL { 
-          ?item wdt:P17 ?location.
-          FILTER(EXISTS { ?location rdfs:label ?locationLabel. })
-        }
-        SERVICE wikibase:label { 
-          bd:serviceParam wikibase:language "${language}".
-          ?item rdfs:label ?itemLabel.
-          ?location rdfs:label ?locationLabel.
-        }
+        FILTER(?itemLabel != "")
       }
       ORDER BY DESC(?startDate)
     `;
-    
-    console.log('Requête SPARQL complète:', query);
-    return query;
-  }
-
-  private formatDate(dateString: string): string {
-    try {
-      // Gestion des différentes précisions de dates
-      if (dateString.match(/^\d{4}$/)) {
-        // Format année uniquement
-        return dateString;
-      } else if (dateString.match(/^\d{4}-\d{2}$/)) {
-        // Format année-mois
-        const [year, month] = dateString.split('-');
-        const date = new Date(parseInt(year), parseInt(month) - 1);
-        return date.toLocaleDateString('fr-FR', {
-          year: 'numeric',
-          month: 'long'
-        });
-      } else if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        // Format année-mois-jour
-        const date = new Date(dateString);
-        return date.toLocaleDateString('fr-FR', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-      } else {
-        // Format non reconnu, on retourne la date brute
-        console.warn('Format de date non reconnu:', dateString);
-        return dateString;
-      }
-    } catch (error) {
-      console.error('Erreur de formatage de date:', error);
-      return dateString;
-    }
   }
 
   private transformResponse(bindings: any[]): GeologicalPeriod[] {
-    console.log('Début de transformation des données...');
-    console.log('Nombre total de périodes:', bindings.length);
-    
     return bindings.map(binding => {
-      console.log('\n--- Traitement d\'une période ---');
-      console.log('Données brutes du binding:', JSON.stringify(binding, null, 2));
-      
       if (!binding.item?.value || !binding.itemLabel?.value) {
-        console.error('Données invalides:', binding);
         throw new WikidataError(
           'Données de période géologique invalides',
           'INVALID_PERIOD_DATA'
         );
       }
 
-      // Debug détaillé des données
-      console.log('Données de localisation:');
-      console.log('- Location value:', binding.location?.value);
-      console.log('- Location type:', binding.location?.type);
-      console.log('- LocationLabel value:', binding.locationLabel?.value);
-      console.log('- LocationLabel type:', binding.locationLabel?.type);
-      console.log('- LocationLabel language:', binding.locationLabel?.['xml:lang']);
-
-      // Gestion de la localisation
-      let locationDescription: string = 'Toute la Terre';
-      if (binding.locationLabel?.value) {
-        locationDescription = `Localisation: ${binding.locationLabel.value}`;
-        console.log('Localisation trouvée:', locationDescription);
-      } else {
-        console.log('Aucune localisation spécifique trouvée, utilisation de la valeur par défaut');
-        if (binding.location?.value) {
-          console.log('URI de localisation trouvée mais sans label:', binding.location.value);
-        }
-      }
-
-      const period = {
+      return {
         id: binding.item.value.split('/').pop() || '',
         label: binding.itemLabel.value,
-        description: locationDescription,
-        startDate: binding.startDate?.value ? DateFormatter.format(binding.startDate.value, 'geological') : undefined,
-        endDate: binding.endDate?.value ? DateFormatter.format(binding.endDate.value, 'geological') : undefined,
+        description: undefined,
+        startDate: binding.startDate?.value,
+        endDate: binding.endDate?.value,
         parentPeriod: undefined,
         childPeriods: []
       };
-
-      console.log('Période transformée:', period);
-      return period;
     });
   }
 
-  async getGeologicalPeriods(options: QueryOptions): Promise<GeologicalPeriod[]> {
+  async getGeologicalPeriods(options: QueryOptions = {}): Promise<GeologicalPeriod[]> {
     const cacheKey = this.getCacheKey(options);
     const cachedData = this.getFromCache(cacheKey);
     if (cachedData) {
@@ -281,8 +209,6 @@ export class WikidataService {
             'INVALID_RESPONSE'
           );
         }
-
-        console.log('Réponse brute de Wikidata:', JSON.stringify(response.data.results.bindings, null, 2));
 
         const periods = this.transformResponse(response.data.results.bindings);
         this.setCache(cacheKey, periods);

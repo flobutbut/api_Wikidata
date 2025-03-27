@@ -143,28 +143,34 @@ export class WikidataService {
       ? `?item wdt:P361 wd:${parentId}.`  // Si on a un parent, on cherche ses enfants
       : `VALUES ?item { wd:Q104460 wd:Q104168 wd:Q104162 wd:Q101313 }`; // Liste des éons
     
-    // Afficher la requête complète pour le débogage
-    const query = `
-      SELECT DISTINCT ?item ?itemLabel ?startDate ?endDate ?location ?locationLabel
+    return `
+      SELECT DISTINCT ?item ?itemLabel ?startDate ?endDate ?location ?locationLabel ?region ?regionLabel
       WHERE {
         ${parentFilter}
+        SERVICE wikibase:label { 
+          bd:serviceParam wikibase:language "${language},en". 
+          ?item rdfs:label ?itemLabel.
+        }
         OPTIONAL { ?item wdt:P580 ?startDate. }
         OPTIONAL { ?item wdt:P582 ?endDate. }
         OPTIONAL { 
-          ?item wdt:P17 ?location.
-          FILTER(EXISTS { ?location rdfs:label ?locationLabel. })
+          ?item wdt:P276 ?location.  # located in
+          SERVICE wikibase:label { 
+            bd:serviceParam wikibase:language "${language},en". 
+            ?location rdfs:label ?locationLabel.
+          }
         }
-        SERVICE wikibase:label { 
-          bd:serviceParam wikibase:language "${language}".
-          ?item rdfs:label ?itemLabel.
-          ?location rdfs:label ?locationLabel.
+        OPTIONAL {
+          ?item wdt:P921 ?region.  # topic's main category
+          SERVICE wikibase:label { 
+            bd:serviceParam wikibase:language "${language},en". 
+            ?region rdfs:label ?regionLabel.
+          }
         }
+        FILTER(?itemLabel != "")
       }
       ORDER BY DESC(?startDate)
     `;
-    
-    console.log('Requête SPARQL complète:', query);
-    return query;
   }
 
   private formatDate(dateString: string): string {
@@ -201,42 +207,36 @@ export class WikidataService {
   }
 
   private transformResponse(bindings: any[]): GeologicalPeriod[] {
-    console.log('Début de transformation des données...');
-    console.log('Nombre total de périodes:', bindings.length);
-    
     return bindings.map(binding => {
-      console.log('\n--- Traitement d\'une période ---');
-      console.log('Données brutes du binding:', JSON.stringify(binding, null, 2));
-      
       if (!binding.item?.value || !binding.itemLabel?.value) {
-        console.error('Données invalides:', binding);
         throw new WikidataError(
           'Données de période géologique invalides',
           'INVALID_PERIOD_DATA'
         );
       }
 
-      // Debug détaillé des données
-      console.log('Données de localisation:');
-      console.log('- Location value:', binding.location?.value);
-      console.log('- Location type:', binding.location?.type);
-      console.log('- LocationLabel value:', binding.locationLabel?.value);
-      console.log('- LocationLabel type:', binding.locationLabel?.type);
-      console.log('- LocationLabel language:', binding.locationLabel?.['xml:lang']);
+      // Debug des données
+      console.log('Item:', binding.item.value);
+      console.log('Label:', binding.itemLabel.value);
+      console.log('Date de début brute:', binding.startDate?.value);
+      console.log('Date de fin brute:', binding.endDate?.value);
+      console.log('Location:', binding.location?.value);
+      console.log('Location Label:', binding.locationLabel?.value);
+      console.log('Region:', binding.regionLabel?.value);
 
       // Gestion de la localisation
-      let locationDescription: string = 'Toute la Terre';
-      if (binding.locationLabel?.value) {
+      let locationDescription: string = 'Toute la Terre'; // Par défaut, toute la Terre
+      
+      // Si on a une région spécifique, on l'affiche
+      if (binding.regionLabel?.value) {
+        locationDescription = `Localisation: ${binding.regionLabel.value}`;
+      }
+      // Sinon si on a une localisation spécifique, on l'affiche
+      else if (binding.locationLabel?.value) {
         locationDescription = `Localisation: ${binding.locationLabel.value}`;
-        console.log('Localisation trouvée:', locationDescription);
-      } else {
-        console.log('Aucune localisation spécifique trouvée, utilisation de la valeur par défaut');
-        if (binding.location?.value) {
-          console.log('URI de localisation trouvée mais sans label:', binding.location.value);
-        }
       }
 
-      const period = {
+      return {
         id: binding.item.value.split('/').pop() || '',
         label: binding.itemLabel.value,
         description: locationDescription,
@@ -245,9 +245,6 @@ export class WikidataService {
         parentPeriod: undefined,
         childPeriods: []
       };
-
-      console.log('Période transformée:', period);
-      return period;
     });
   }
 
@@ -281,8 +278,6 @@ export class WikidataService {
             'INVALID_RESPONSE'
           );
         }
-
-        console.log('Réponse brute de Wikidata:', JSON.stringify(response.data.results.bindings, null, 2));
 
         const periods = this.transformResponse(response.data.results.bindings);
         this.setCache(cacheKey, periods);

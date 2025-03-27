@@ -143,17 +143,13 @@ export class WikidataService {
       ? `?item wdt:P361 wd:${parentId}.`  // Si on a un parent, on cherche ses enfants
       : `VALUES ?item { wd:Q104460 wd:Q104168 wd:Q104162 wd:Q101313 }`; // Liste des éons
     
-    // Afficher la requête complète pour le débogage
-    const query = `
+    return `
       SELECT DISTINCT ?item ?itemLabel ?startDate ?endDate ?location ?locationLabel
       WHERE {
         ${parentFilter}
         OPTIONAL { ?item wdt:P580 ?startDate. }
         OPTIONAL { ?item wdt:P582 ?endDate. }
-        OPTIONAL { 
-          ?item wdt:P17 ?location.
-          FILTER(EXISTS { ?location rdfs:label ?locationLabel. })
-        }
+        OPTIONAL { ?item wdt:P706 ?location. }
         SERVICE wikibase:label { 
           bd:serviceParam wikibase:language "${language}".
           ?item rdfs:label ?itemLabel.
@@ -162,9 +158,6 @@ export class WikidataService {
       }
       ORDER BY DESC(?startDate)
     `;
-    
-    console.log('Requête SPARQL complète:', query);
-    return query;
   }
 
   private formatDate(dateString: string): string {
@@ -202,11 +195,9 @@ export class WikidataService {
 
   private transformResponse(bindings: any[]): GeologicalPeriod[] {
     console.log('Début de transformation des données...');
-    console.log('Nombre total de périodes:', bindings.length);
-    
     return bindings.map(binding => {
       console.log('\n--- Traitement d\'une période ---');
-      console.log('Données brutes du binding:', JSON.stringify(binding, null, 2));
+      console.log('Données brutes du binding:', binding);
       
       if (!binding.item?.value || !binding.itemLabel?.value) {
         console.error('Données invalides:', binding);
@@ -231,9 +222,6 @@ export class WikidataService {
         console.log('Localisation trouvée:', locationDescription);
       } else {
         console.log('Aucune localisation spécifique trouvée, utilisation de la valeur par défaut');
-        if (binding.location?.value) {
-          console.log('URI de localisation trouvée mais sans label:', binding.location.value);
-        }
       }
 
       const period = {

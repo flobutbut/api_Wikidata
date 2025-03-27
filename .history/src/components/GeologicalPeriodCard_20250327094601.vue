@@ -19,33 +19,10 @@
 
 <script setup lang="ts">
 import type { GeologicalPeriod } from '../types/geological';
-import { onMounted, watch } from 'vue';
 
-const props = defineProps<{
+defineProps<{
   period: GeologicalPeriod;
 }>();
-
-// Log des données reçues
-onMounted(() => {
-  console.log('GeologicalPeriodCard - Données reçues:', {
-    id: props.period.id,
-    label: props.period.label,
-    description: props.period.description,
-    startDate: props.period.startDate,
-    endDate: props.period.endDate
-  });
-});
-
-// Surveiller les changements de période
-watch(() => props.period, (newPeriod) => {
-  console.log('GeologicalPeriodCard - Mise à jour des données:', {
-    id: newPeriod.id,
-    label: newPeriod.label,
-    description: newPeriod.description,
-    startDate: newPeriod.startDate,
-    endDate: newPeriod.endDate
-  });
-}, { deep: true });
 
 defineEmits<{
   (e: 'click'): void;
