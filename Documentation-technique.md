@@ -291,4 +291,12 @@ Le projet utilise Vite comme bundler avec la configuration suivante :
    - Messages d'erreur clairs
    - Navigation intuitive
    - Transitions fluides
-   - Hiérarchie visuelle claire 
+   - Hiérarchie visuelle claire
+
+## Propriétés Wikidata testées
+
+### Localisation
+- P276 (situé dans) : Première tentative, résultats incomplets
+- P706 (situé sur le territoire géographique) : Deuxième tentative, résultats non concluants
+
+La gestion de la localisation des périodes géologiques et archéologiques reste un défi à résoudre. Les propriétés testées ne donnent pas les résultats escomptés. 

@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import type { GeologicalPeriod, WikidataResponse } from '../types/geological';
+import { DateFormatter } from '../utils/dateFormatter';
 
 const WIKIDATA_API_URL = '/api/wikidata/sparql';
 const MAX_RETRIES = 3;
@@ -143,19 +144,60 @@ export class WikidataService {
       : `VALUES ?item { wd:Q104460 wd:Q104168 wd:Q104162 wd:Q101313 }`; // Liste des éons
     
     return `
-      SELECT DISTINCT ?item ?itemLabel ?startDate ?endDate
+      SELECT DISTINCT ?item ?itemLabel ?startDate ?endDate ?location ?locationLabel
       WHERE {
         ${parentFilter}
         SERVICE wikibase:label { 
           bd:serviceParam wikibase:language "${language},en". 
           ?item rdfs:label ?itemLabel.
+          ?location rdfs:label ?locationLabel.
         }
         OPTIONAL { ?item wdt:P580 ?startDate. }
         OPTIONAL { ?item wdt:P582 ?endDate. }
+        OPTIONAL { 
+          ?item wdt:P706 ?location.  # situé sur le territoire géographique
+          SERVICE wikibase:label { 
+            bd:serviceParam wikibase:language "${language},en". 
+            ?location rdfs:label ?locationLabel.
+          }
+        }
         FILTER(?itemLabel != "")
       }
       ORDER BY DESC(?startDate)
     `;
+  }
+
+  private formatDate(dateString: string): string {
+    try {
+      // Gestion des différentes précisions de dates
+      if (dateString.match(/^\d{4}$/)) {
+        // Format année uniquement
+        return dateString;
+      } else if (dateString.match(/^\d{4}-\d{2}$/)) {
+        // Format année-mois
+        const [year, month] = dateString.split('-');
+        const date = new Date(parseInt(year), parseInt(month) - 1);
+        return date.toLocaleDateString('fr-FR', {
+          year: 'numeric',
+          month: 'long'
+        });
+      } else if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        // Format année-mois-jour
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      } else {
+        // Format non reconnu, on retourne la date brute
+        console.warn('Format de date non reconnu:', dateString);
+        return dateString;
+      }
+    } catch (error) {
+      console.error('Erreur de formatage de date:', error);
+      return dateString;
+    }
   }
 
   private transformResponse(bindings: any[]): GeologicalPeriod[] {
@@ -167,19 +209,35 @@ export class WikidataService {
         );
       }
 
+      // Debug des données
+      console.log('Item:', binding.item.value);
+      console.log('Label:', binding.itemLabel.value);
+      console.log('Date de début brute:', binding.startDate?.value);
+      console.log('Date de fin brute:', binding.endDate?.value);
+      console.log('Location:', binding.location?.value);
+      console.log('Location Label:', binding.locationLabel?.value);
+
+      // Gestion de la localisation
+      let locationDescription: string = 'Toute la Terre'; // Par défaut, toute la Terre
+      
+      // Si on a une localisation spécifique, on l'affiche
+      if (binding.locationLabel?.value) {
+        locationDescription = `Localisation: ${binding.locationLabel.value}`;
+      }
+
       return {
         id: binding.item.value.split('/').pop() || '',
         label: binding.itemLabel.value,
-        description: undefined,
-        startDate: binding.start?.value,
-        endDate: binding.end?.value,
+        description: locationDescription,
+        startDate: binding.startDate?.value ? DateFormatter.format(binding.startDate.value, 'geological') : undefined,
+        endDate: binding.endDate?.value ? DateFormatter.format(binding.endDate.value, 'geological') : undefined,
         parentPeriod: undefined,
         childPeriods: []
       };
     });
   }
 
-  async getGeologicalPeriods(options: QueryOptions = {}): Promise<GeologicalPeriod[]> {
+  async getGeologicalPeriods(options: QueryOptions): Promise<GeologicalPeriod[]> {
     const cacheKey = this.getCacheKey(options);
     const cachedData = this.getFromCache(cacheKey);
     if (cachedData) {

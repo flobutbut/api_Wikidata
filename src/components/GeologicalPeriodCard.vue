@@ -4,10 +4,13 @@
     @click="$emit('click')"
   >
     <div class="period-info">
-      <h3>{{ period.label }}</h3>
+      <h4>{{ period.label }}</h4>
       <p v-if="period.startDate || period.endDate" class="period-dates">
         {{ period.startDate ? `Début: ${period.startDate}` : '' }}
         {{ period.endDate ? ` - Fin: ${period.endDate}` : '' }}
+      </p>
+      <p v-if="period.description" class="period-description">
+        {{ period.description }}
       </p>
     </div>
     <div class="period-arrow">→</div>
@@ -50,14 +53,15 @@ defineEmits<{
   text-align: left;
 }
 
-.period-info h3 {
-  margin: 0 0 10px 0;
+.period-info h4 {
+  margin: 0;
   color: #333;
-  font-size: 1.2em;
+  font-size: 0.9em;
+  font-weight: bold;
 }
 
 .period-dates {
-  margin: 5px 0;
+  margin: 0;
   color: #666;
   font-size: 0.9em;
 }
@@ -67,5 +71,12 @@ defineEmits<{
   font-size: 1.2em;
   margin-left: 15px;
   padding: 0 5px;
+}
+
+.period-description {
+  margin: 0;
+  color: #666;
+  font-size: 0.9em;
+  font-style: italic;
 }
 </style> 
