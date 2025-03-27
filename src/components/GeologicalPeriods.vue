@@ -1,15 +1,22 @@
 <template>
   <div class="geological-periods">
-    <h2>Périodes Géologiques</h2>
+    <h2 class="title">Périodes Géologiques</h2>
     
     <div class="controls">
-      <select v-model="selectedLanguage" @change="fetchPeriods">
-        <option value="fr">Français</option>
-        <option value="en">English</option>
-      </select>
-      <button @click="goBack" class="back-button">
-        Retour
-      </button>
+      <div class="controls-left">
+        <div class="back-button-container">
+          <BackButton
+            v-if="currentParent"
+            @click="goBack"
+          />
+        </div>
+      </div>
+      <div class="controls-right">
+        <LanguageSelector
+          v-model="selectedLanguage"
+          @update:modelValue="fetchPeriods"
+        />
+      </div>
     </div>
     
     <div v-if="loading" class="loading">
@@ -21,21 +28,12 @@
     </div>
     
     <div v-else class="periods-list">
-      <div 
-        v-for="period in periods" 
-        :key="period.id" 
-        class="period-item"
+      <GeologicalPeriodCard
+        v-for="period in periods"
+        :key="period.id"
+        :period="period"
         @click="enterPeriod(period)"
-      >
-        <div class="period-info">
-          <h3>{{ period.label }}</h3>
-          <p v-if="period.startDate || period.endDate">
-            {{ period.startDate ? `Début: ${period.startDate}` : '' }}
-            {{ period.endDate ? ` - Fin: ${period.endDate}` : '' }}
-          </p>
-        </div>
-        <div class="period-arrow">→</div>
-      </div>
+      />
     </div>
   </div>
 </template>
@@ -43,6 +41,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { WikidataService } from '../services/wikidata';
+import GeologicalPeriodCard from './GeologicalPeriodCard.vue';
+import BackButton from './BackButton.vue';
+import LanguageSelector from './LanguageSelector.vue';
 import type { GeologicalPeriod } from '../types/geological';
 
 const wikidataService = WikidataService.getInstance();
@@ -90,64 +91,34 @@ onMounted(fetchPeriods);
   margin: 0 auto;
 }
 
+.title {
+  color: #333;
+  margin-bottom: 20px;
+  font-size: 1.8em;
+}
+
 .controls {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.period-item {
-  display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  padding: 15px;
-  border: 1px solid #ddd;
-  margin-bottom: 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background-color: white;
+  margin-bottom: 20px;
+  align-items: center;
 }
 
-.period-item:hover {
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  border-color: #4CAF50;
-}
-
-.period-info {
+.controls-left {
   flex: 1;
-  text-align: left;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
 }
 
-.period-info h3 {
-  margin: 0 0 10px 0;
-  color: #333;
+.back-button-container {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
 }
 
-.period-info p {
-  margin: 5px 0;
-  color: #666;
-}
-
-.period-arrow {
-  color: #4CAF50;
-  font-size: 1.2em;
-  margin-left: 10px;
-  padding-top: 3px;
-}
-
-.back-button {
-  padding: 8px 16px;
-  background-color: #f44336;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.back-button:hover {
-  background-color: #d32f2f;
+.controls-right {
+  margin-left: auto;
 }
 
 .loading, .error {
@@ -157,12 +128,5 @@ onMounted(fetchPeriods);
 
 .error {
   color: #f44336;
-}
-
-select {
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-  background-color: white;
 }
 </style> 

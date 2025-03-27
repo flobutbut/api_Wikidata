@@ -27,17 +27,29 @@ La navigation hiérarchique utilise la propriété P361 (partie de) pour récup�
 
 ### Composants
 
-#### GeologicalPeriods
+#### GeologicalPeriods (Composant Principal)
+- Gestion de l'état global de l'application
+- Coordination des sous-composants
+- Gestion des données et des erreurs
+- Affichage conditionnel des états (chargement, erreur)
 
-Composant principal qui affiche :
-- Un sélecteur de langue (FR/EN)
-- Un bouton de retour (visible uniquement en navigation profonde)
-- Une liste de périodes géologiques avec :
-  - Nom de la période
-  - Dates de début et fin
-  - Navigation hiérarchique
-  - Effets visuels optimisés
-  - Alignement et espacement améliorés
+#### GeologicalPeriodCard
+- Affichage d'une période géologique individuelle
+- Gestion des interactions utilisateur
+- Styles isolés pour la carte
+- Émission d'événements de clic
+
+#### BackButton
+- Bouton de navigation retour
+- Affichage conditionnel basé sur la profondeur de navigation
+- Styles isolés pour le bouton
+- Émission d'événements de clic
+
+#### LanguageSelector
+- Sélection de la langue d'affichage
+- Support du v-model pour la liaison bidirectionnelle
+- Styles isolés pour le sélecteur
+- Gestion des événements de changement
 
 ### Types
 
@@ -137,19 +149,30 @@ Le projet utilise Vite comme bundler avec la configuration suivante :
 - Validation des champs obligatoires
 - Transformation sécurisée des données
 
-### Composant GeologicalPeriods
-- Affichage des périodes géologiques
-- Gestion des états (chargement, erreur, données)
-- Support multilingue
-- Pagination côté client
-- Formatage des dates
-- Design responsive avec CSS Grid
-- Optimisations UI/UX :
-  - Gestion conditionnelle du bouton retour
-  - Alignement vertical centré des éléments
-  - Typographie hiérarchique
-  - Espacements optimisés
-  - Transitions fluides
+### Architecture des Composants
+#### GeologicalPeriods
+- Gestion de l'état global
+- Coordination des sous-composants
+- Gestion des données et des erreurs
+- Affichage conditionnel des états
+
+#### GeologicalPeriodCard
+- Affichage d'une période
+- Gestion des interactions
+- Styles isolés
+- Émission d'événements
+
+#### BackButton
+- Navigation retour
+- Affichage conditionnel
+- Styles isolés
+- Émission d'événements
+
+#### LanguageSelector
+- Sélection de langue
+- Support v-model
+- Styles isolés
+- Gestion des événements
 
 ### Tests
 #### Tests Unitaires du Service
@@ -221,6 +244,8 @@ Le projet utilise Vite comme bundler avec la configuration suivante :
    - Documentation des fonctions
    - Gestion des cas d'erreur
    - Respect des conventions de nommage
+   - Composants réutilisables
+   - Styles isolés
 
 3. UI/UX
    - Design responsive

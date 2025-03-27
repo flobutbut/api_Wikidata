@@ -16,6 +16,9 @@
 - [x] Alignement des éléments corrigé
 - [x] Gestion du bouton retour optimisée
 - [x] Typographie et espacements améliorés
+- [x] Architecture modulaire des composants
+- [x] Styles isolés pour chaque composant
+- [x] Support v-model pour le sélecteur de langue
 
 ### API Wikidata
 - [x] Connexion à l'API SPARQL
@@ -33,6 +36,8 @@
 - [ ] Amélioration des animations
 - [ ] Mode sombre
 - [ ] Filtres de recherche
+- [ ] Tests des composants
+- [ ] Documentation des composants
 
 ### Données
 - [ ] Affichage des descriptions
@@ -53,4 +58,8 @@
 2. Ajout des descriptions des périodes
 3. Création d'une visualisation chronologique
 4. Amélioration de la gestion des erreurs
-5. Tests unitaires et d'intégration 
+5. Tests unitaires et d'intégration
+6. Documentation des composants
+7. Mode sombre
+8. Historique de navigation
+9. Breadcrumb pour la navigation 
