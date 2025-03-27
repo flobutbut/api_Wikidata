@@ -4,7 +4,38 @@
 
 Le projet utilise Vue 3 avec TypeScript pour créer une interface de navigation des périodes géologiques en utilisant l'API SPARQL de Wikidata.
 
+### Structure du Projet
+```
+src/
+├── components/
+│   ├── GeologicalPeriods.vue
+│   ├── GeologicalPeriodCard.vue
+│   └── LanguageSelector.vue
+├── services/
+│   └── wikidata.ts
+├── types/
+│   └── geological.ts
+└── utils/
+    └── dateFormatter.ts
+```
+
 ### Services
+
+#### Service Wikidata (`wikidata.ts`)
+- Gestion des requêtes SPARQL vers l'API Wikidata
+- Transformation des données brutes en objets typés
+- Gestion des erreurs et des timeouts
+
+#### Formatage des Dates (`dateFormatter.ts`)
+- Classe utilitaire pour le formatage des dates
+- Gestion des différents formats de dates :
+  - Dates géologiques (années avant le présent)
+  - Dates françaises (JJ/MM/AAAA)
+  - Dates anglaises (MM/DD/YYYY)
+- Conversion automatique des unités :
+  - Ga (Giga-années) pour les dates ≥ 1 000 000 000 ans
+  - Ma (Méga-années) pour les dates ≥ 1 000 000 ans
+  - ans pour les dates < 1 000 000 ans
 
 #### WikidataService
 
@@ -53,6 +84,7 @@ La navigation hiérarchique utilise la propriété P361 (partie de) pour récup�
 
 ### Types
 
+#### GeologicalPeriod
 ```typescript
 interface GeologicalPeriod {
   id: string;
@@ -60,10 +92,16 @@ interface GeologicalPeriod {
   description?: string;
   startDate?: string;
   endDate?: string;
-  parentPeriod?: string;
-  childPeriods: string[];
+  parentPeriod?: GeologicalPeriod;
+  childPeriods: GeologicalPeriod[];
 }
 ```
+
+## Technologies Utilisées
+- Vue 3 avec Composition API
+- TypeScript
+- Axios pour les requêtes HTTP
+- SPARQL pour les requêtes Wikidata
 
 ## Configuration Proxy
 

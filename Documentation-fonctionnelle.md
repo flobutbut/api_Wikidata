@@ -1,5 +1,55 @@
 # Documentation Fonctionnelle
 
+## Fonctionnalités
+
+### Navigation des Périodes Géologiques
+- Affichage hiérarchique des périodes géologiques
+- Navigation entre les différentes époques
+- Affichage des dates de début et de fin de chaque période
+- Support multilingue (français, anglais, espagnol)
+
+### Affichage des Dates
+- Format adapté à la géologie :
+  - Dates en années avant le présent
+  - Unités adaptées à l'échelle :
+    - Ga (Giga-années) pour les dates ≥ 1 000 000 000 ans
+    - Ma (Méga-années) pour les dates ≥ 1 000 000 ans
+    - ans pour les dates < 1 000 000 ans
+- Exemple d'affichage :
+  - "2.50 Ga" pour 2 500 000 000 ans
+  - "538.80 Ma" pour 538 800 000 ans
+  - "66.0 Ma" pour 66 000 000 ans
+
+### Sélection de la Langue
+- Changement dynamique de la langue d'affichage
+- Persistance de la sélection de langue
+- Support des caractères spéciaux et accents
+
+## Interface Utilisateur
+
+### Composants
+1. GeologicalPeriods
+   - Liste principale des périodes
+   - Navigation hiérarchique
+   - Gestion des états de chargement
+
+2. GeologicalPeriodCard
+   - Affichage d'une période individuelle
+   - Nom de la période
+   - Dates de début et de fin
+   - Indicateur de navigation
+
+3. LanguageSelector
+   - Sélection de la langue
+   - Affichage des drapeaux
+   - Changement dynamique
+
+### États de l'Interface
+- État de chargement initial
+- État de chargement des sous-périodes
+- État d'erreur
+- État de navigation
+
 ## Navigation des Périodes Géologiques
 
 ### Vue d'ensemble
